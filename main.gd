@@ -12,7 +12,7 @@ extends Node
 @export var use_sub_threads: bool = true
 
 ## cache_mode does not meaningfully affect this bug, but this property can be changed to
-## validate this. 
+## validate this.
 @export var cache_mode: ResourceLoader.CacheMode = ResourceLoader.CACHE_MODE_IGNORE_DEEP
 
 @export_subgroup("Example setup")
@@ -21,10 +21,12 @@ extends Node
 ## references an autoloaded scene.
 @export_file var scene_path: String = ""
 
+
 func _ready() -> void:
 	if load_on_ready:
 		# NOTE: This call is deferred to demonstrate that it has no affect on the bug.
 		load_scene.call_deferred()
+
 
 func load_scene():
 	print("\nLoading packed scene and adding it as a child.")
@@ -33,11 +35,14 @@ func load_scene():
 	print("	> Scene dependencies: ", ResourceLoader.get_dependencies(scene_path))
 
 	# The error originates from this call, not when this
-	var err := ResourceLoader.load_threaded_request(
-		scene_path,
-		"PackedScene",
-		use_sub_threads,
-		cache_mode,
+	var err := (
+		ResourceLoader
+		. load_threaded_request(
+			scene_path,
+			"PackedScene",
+			use_sub_threads,
+			cache_mode,
+		)
 	)
 	assert(err == OK, "failed to request scene load")
 
@@ -55,3 +60,7 @@ func load_scene():
 	add_child(node)
 
 	print("	> Added node as child.")
+
+
+func _on_button_pressed():
+	load_scene()
