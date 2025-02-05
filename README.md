@@ -4,7 +4,7 @@ A repository demonstrating an issue trying to background load a script which ref
 
 ## Issue description
 
-Given an autoloaded scene, `AutoLoad`, and a script which references `Autoload`, `caller.gd`, attempting to background load a node which attaches `caller.gd` as a script _with `use_sub_threads` enabled_ will produce an engine error:
+Given an autoloaded scene (`AutoLoad`) and a script which references `Autoload` (`caller.gd`), attempting to background load a node which attaches `caller.gd` as a script _with `use_sub_threads` enabled_ will often produce an internal engine error:
 
 ```
 E 0:00:08:0459   get_script: Caller thread can't call this function in this node (/root/Autoload). Use call_deferred() or call_thread_group() instead.
@@ -12,7 +12,21 @@ E 0:00:08:0459   get_script: Caller thread can't call this function in this node
   <C++ Source>   scene/main/node.cpp:3864 @ get_script()
 ```
 
-Note that this error does not seem to prevent the loaded scene from running correctly.
+There are a few things to note:
+
+- This error does not seem to prevent the loaded scene from running correctly.
+- This error doesn't occur all of the time, so it's likely a race condition.
+  - It occurs _nearly all of the time_ if the load request is invoked from a caller's `_ready` callback. Deferring the call to load the scene does _not_ fix the problem or decrease the rate of occurence under these circumstances.
+  - It occurs _rarely_ if invoked as a result of a user input (e.g. a button press) _after_ the loader scene has been ready for a while.
+
+### Workarounds
+
+> NOTE: A workaround isn't required because there doesn't seem to be any negative consequences, but if the error is noisy, these are the options.
+
+The following are workarounds:
+
+- Don't background load resources using `use_sub_threads`.
+- Don't directly reference an autoload within scripts. Instead, fetch the autoload: `get_node("/root/<auto-load name>")`.
 
 ## Reproduction steps
 
